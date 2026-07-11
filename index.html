@@ -166,13 +166,7 @@ function cerrarDetalle(){
   document.getElementById('overlay').classList.remove('show');
 }
 
-function render(){
-  try {
-    var hash = window.location.hash.substring(1);
-    if(!hash){ document.getElementById('app').innerHTML = '<div class="errbox">No se encontraron datos en el enlace.</div>'; return; }
-    var json = LZString.decompressFromEncodedURIComponent(hash);
-    if(!json){ document.getElementById('app').innerHTML = '<div class="errbox">No se pudo leer la información. El enlace puede estar incompleto.</div>'; return; }
-    var d = JSON.parse(json);
+function pintarPerfil(d){
     PERFIL_DATA = d;
     var ini = (d.n||'').split(' ').filter(function(x){return x.length>0;}).slice(0,2).map(function(x){return x.charAt(0);}).join('').toUpperCase();
 
@@ -192,6 +186,28 @@ function render(){
       '<div class="ti">HISTORIAL RECIENTE</div><div class="hl" id="histListInner"></div>' +
       '</div>';
     renderHistorial();
+}
+
+function render(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var id = params.get('id');
+    if(id){
+      var jsonUrl = 'https://raw.githubusercontent.com/icusa-5soles/perfil-auditor/main/data/' + id + '.json?t=' + Date.now();
+      fetch(jsonUrl)
+       .then(function(r){ if(!r.ok) throw new Error('no encontrado'); return r.json(); })
+       .then(function(d){ pintarPerfil(d); })
+       .catch(function(err){
+        document.getElementById('app').innerHTML = '<div class="errbox">No se pudo cargar el perfil. Verifica tu conexión a internet.</div>';
+       });
+      return;
+    }
+    var hash = window.location.hash.substring(1);
+    if(!hash){ document.getElementById('app').innerHTML = '<div class="errbox">No se encontraron datos en el enlace.</div>'; return; }
+    var json = LZString.decompressFromEncodedURIComponent(hash);
+    if(!json){ document.getElementById('app').innerHTML = '<div class="errbox">No se pudo leer la información. El enlace puede estar incompleto.</div>'; return; }
+    var d = JSON.parse(json);
+    pintarPerfil(d);
   } catch(e) {
     document.getElementById('app').innerHTML = '<div class="errbox">Error al mostrar el perfil: '+e.message+'</div>';
   }
