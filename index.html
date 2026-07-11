@@ -19,15 +19,20 @@ body{background:#F1F5F9;color:#1B2A4A;min-height:100vh;padding:16px;}
 .rw:last-child{border-bottom:none;}
 .kk{color:#64748B;font-weight:600;}
 .vv{color:#1B2A4A;font-weight:700;text-align:right;}
+.outlook-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:12px;padding:11px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;color:#1D4ED8;font-weight:700;font-size:12px;cursor:pointer;text-decoration:none;}
+.outlook-btn svg{width:16px;height:16px;flex-shrink:0;}
 .st{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;}
-.si{text-align:center;background:#F8FAFC;padding:12px 4px;border-radius:8px;}
+.si{text-align:center;background:#F8FAFC;padding:12px 4px;border-radius:8px;cursor:pointer;border:2px solid transparent;}
 .si .nn{font-size:22px;font-weight:800;color:#1B2A4A;line-height:1;}
 .si .ll{font-size:8px;font-weight:700;color:#64748B;letter-spacing:.08em;margin-top:4px;}
+.si.active{border-color:#1B2A4A;background:#EFF6FF;}
 .si.ap{background:#F0FDF4;} .si.ap .nn{color:#166534;}
+.si.ap.active{border-color:#22C55E;}
 .si.re{background:#FEF2F2;} .si.re .nn{color:#991B1B;}
+.si.re.active{border-color:#EF4444;}
 .ti{font-size:10px;font-weight:800;color:#1B2A4A;letter-spacing:.12em;padding:16px 20px 10px;background:#fff;border-top:1px solid #E2E8F0;}
 .hl{padding:0 20px 20px;background:#fff;}
-.hi{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#F8FAFC;border-radius:8px;margin-bottom:6px;font-size:11px;}
+.hi{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#F8FAFC;border-radius:8px;margin-bottom:6px;font-size:11px;cursor:pointer;}
 .hi.ap{border-left:3px solid #22C55E;} .hi.re{border-left:3px solid #EF4444;}
 .hm{font-size:9px;color:#94A3B8;font-weight:700;letter-spacing:.05em;margin-bottom:2px;}
 .hs{font-size:11px;font-weight:700;color:#1B2A4A;}
@@ -35,50 +40,165 @@ body{background:#F1F5F9;color:#1B2A4A;min-height:100vh;padding:16px;}
 .hc.ap{color:#166534;} .hc.re{color:#991B1B;}
 .errbox{padding:40px 20px;text-align:center;color:#991B1B;font-size:13px;}
 .foot{text-align:center;padding:16px 0 0;font-size:9px;color:#94A3B8;letter-spacing:.05em;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(27,42,74,.5);align-items:center;justify-content:center;padding:20px;z-index:10;}
+.overlay.show{display:flex;}
+.modal{background:#fff;border-radius:14px;max-width:380px;width:100%;overflow:hidden;max-height:80vh;overflow-y:auto;}
+.modal-hd{background:#1B2A4A;color:#fff;padding:16px 18px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;}
+.modal-title{font-size:13px;font-weight:800;}
+.modal-close{cursor:pointer;font-size:16px;opacity:.8;}
+.modal-bd{padding:16px 18px;font-size:12px;}
+.modal-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #F1F5F9;}
+.modal-row .k{color:#64748B;font-weight:600;}
+.modal-row .v{font-weight:700;color:#1B2A4A;text-align:right;}
+.obs-title{font-size:10px;font-weight:800;color:#1B2A4A;letter-spacing:.08em;margin-top:14px;margin-bottom:8px;}
+.obs-item{font-size:12px;color:#334155;padding:6px 0;border-bottom:1px solid #F8FAFC;line-height:1.4;}
+.obs-item b{color:#1B2A4A;}
+.obs-empty{font-size:12px;color:#94A3B8;font-style:italic;padding:8px 0;}
 </style>
 </head>
 <body>
 <div class="wrap"><div id="app"><div class="errbox">Cargando perfil...</div></div><div class="foot">ICUSA · SGC · 5 SOLES</div></div>
+<div class="overlay" id="overlay">
+<div class="modal">
+<div class="modal-hd"><div class="modal-title">Detalle de auditoría</div><div class="modal-close" onclick="cerrarDetalle()">✕</div></div>
+<div class="modal-bd" id="modalBody"></div>
+</div>
+</div>
 <script>
-(function(){
-  function render(){
-    try {
-      var hash = window.location.hash.substring(1);
-      if(!hash){ document.getElementById('app').innerHTML = '<div class="errbox">No se encontraron datos en el enlace.</div>'; return; }
-      var json = LZString.decompressFromEncodedURIComponent(hash);
-      if(!json){ document.getElementById('app').innerHTML = '<div class="errbox">No se pudo leer la información. El enlace puede estar incompleto.</div>'; return; }
-      var d = JSON.parse(json);
-      var meses = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-      var ini = (d.n||'').split(' ').filter(function(x){return x.length>0;}).slice(0,2).map(function(x){return x.charAt(0);}).join('').toUpperCase();
-      var hist = (d.h||[]).slice().sort(function(a,b){return b[0].localeCompare(a[0]);});
-      var histHtml = hist.map(function(a){
-        var mp = a[0].split('/');
-        var mn = (meses[parseInt(mp[0])]||'') + ' 20' + (mp[1]||'');
-        var ok = a[2] >= 90;
-        return '<div class="hi '+(ok?'ap':'re')+'"><div><div class="hm">'+mn+'</div><div class="hs">'+a[1]+'</div></div><div class="hc '+(ok?'ap':'re')+'">'+a[2]+'</div></div>';
-      }).join('');
-      document.getElementById('app').innerHTML =
-        '<div class="card">' +
-        '<div class="hd"><div class="av">'+ini+'</div><div><div class="nm">'+(d.n||'')+'</div><div class="pu">'+(d.p||'')+'</div></div></div>' +
-        '<div class="bd">' +
-        '<div class="rw"><span class="kk">Correo</span><span class="vv">'+(d.c||'—')+'</span></div>' +
-        '<div class="rw"><span class="kk">Ingreso</span><span class="vv">'+(d.i||'—')+'</span></div>' +
-        '<div class="rw"><span class="kk">Departamento</span><span class="vv">'+(d.d||'—')+'</span></div>' +
-        '<div class="st">' +
-        '<div class="si"><div class="nn">'+(d.t||0)+'</div><div class="ll">TOTAL</div></div>' +
-        '<div class="si ap"><div class="nn">'+(d.a||0)+'</div><div class="ll">APROBADAS</div></div>' +
-        '<div class="si re"><div class="nn">'+(d.r||0)+'</div><div class="ll">REPROBADAS</div></div>' +
-        '</div></div>' +
-        (hist.length ? '<div class="ti">HISTORIAL RECIENTE</div><div class="hl">'+histHtml+'</div>' : '') +
-        '</div>';
-    } catch(e) {
-      document.getElementById('app').innerHTML = '<div class="errbox">Error al mostrar el perfil: '+e.message+'</div>';
-    }
+var PERFIL_DATA = null;
+var FILTRO_ACTUAL = 'todas';
+var MESES3 = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+var MESES_LARGO = ['','enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+function fmtIngresoLargo(f){
+  if(!f || typeof f !== 'string' || f.length < 8) return '—';
+  var p = f.split('-');
+  if(p.length !== 3) return f;
+  var m = parseInt(p[1]);
+  if(m < 1 || m > 12) return f;
+  var mesNombre = MESES_LARGO[m];
+  var mesCap = mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1);
+  return parseInt(p[2]) + ' de ' + mesCap + ' ' + p[0];
+}
+
+function fmtMesCortoLargo(mCorto){
+  var mp = (mCorto||'').split('/');
+  if(mp.length < 2) return mCorto;
+  return (MESES3[parseInt(mp[0])] || '') + ' 20' + mp[1];
+}
+
+function esMesConDetalle(mCorto){
+  var mp = (mCorto||'').split('/');
+  if(mp.length < 2) return false;
+  var mes = parseInt(mp[0]);
+  var anio = 2000 + parseInt(mp[1]);
+  return (anio*12+mes) >= (2026*12+6);
+}
+
+function descargarICS(){
+  if(!PERFIL_DATA || !PERFIL_DATA.fe) { alert('No hay fecha de entrega disponible.'); return; }
+  var f = PERFIL_DATA.fe;
+  var p = f.split('-');
+  if(p.length !== 3) { alert('Fecha de entrega inválida.'); return; }
+  var dt = p[0] + p[1] + p[2];
+  var ics = 'BEGIN:VCALENDAR\\r\\nVERSION:2.0\\r\\nPRODID:-//ICUSA//5Soles//ES\\r\\nBEGIN:VEVENT\\r\\nUID:' + dt + '-' + Date.now() + '@icusa5soles\\r\\nDTSTART;VALUE=DATE:' + dt + '\\r\\nDTEND;VALUE=DATE:' + dt + '\\r\\nSUMMARY:Entrega de auditoría 5 Soles - ' + PERFIL_DATA.n + '\\r\\nDESCRIPTION:Fecha límite de entrega de auditoría 5 Soles ICUSA.\\r\\nEND:VEVENT\\r\\nEND:VCALENDAR';
+  var blob = new Blob([ics], {type:'text/calendar'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'Entrega_Auditoria_5Soles.ics';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
+}
+
+function filtrar(tipo){
+  FILTRO_ACTUAL = tipo;
+  renderHistorial();
+  document.querySelectorAll('.si').forEach(function(el){ el.classList.remove('active'); });
+  document.getElementById('si-' + tipo).classList.add('active');
+}
+
+function renderHistorial(){
+  if(!PERFIL_DATA) return;
+  var hist = (PERFIL_DATA.h || []).slice().sort(function(a,b){
+    var pa = a.m.split('/'), pb = b.m.split('/');
+    var va = parseInt(pa[1])*12 + parseInt(pa[0]);
+    var vb = parseInt(pb[1])*12 + parseInt(pb[0]);
+    return vb - va;
+  });
+  if(FILTRO_ACTUAL === 'aprob') hist = hist.filter(function(a){ return a.c >= 90; });
+  else if(FILTRO_ACTUAL === 'reprob') hist = hist.filter(function(a){ return a.c < 90; });
+
+  var html = hist.map(function(a, idx){
+    var ok = a.c >= 90;
+    return '<div class="hi ' + (ok?'ap':'re') + '" onclick="abrirDetalle(' + idx + ')" data-idx-real="' + PERFIL_DATA.h.indexOf(a) + '">' +
+      '<div><div class="hm">' + fmtMesCortoLargo(a.m) + '</div><div class="hs">' + a.s + '</div></div>' +
+      '<div class="hc ' + (ok?'ap':'re') + '">' + a.c + '</div></div>';
+  }).join('');
+  document.getElementById('histListInner').innerHTML = html || '<div class="obs-empty">Sin auditorías en este filtro.</div>';
+  window._histFiltrado = hist;
+}
+
+function abrirDetalle(idx){
+  var item = window._histFiltrado[idx];
+  if(!item) return;
+  var body = '<div class="modal-row"><span class="k">Área</span><span class="v">' + item.s + '</span></div>' +
+    '<div class="modal-row"><span class="k">Fecha de auditoría</span><span class="v">' + fmtMesCortoLargo(item.m) + '</span></div>' +
+    '<div class="modal-row"><span class="k">Auditor</span><span class="v">' + PERFIL_DATA.n + '</span></div>' +
+    '<div class="modal-row" style="border-bottom:none"><span class="k">Fecha de entrega</span><span class="v">' + (item.fe ? fmtIngresoLargo(item.fe) : '—') + '</span></div>';
+  if(item.o && item.o.length){
+    body += '<div class="obs-title">OBSERVACIONES</div>';
+    item.o.forEach(function(txt, i){
+      body += '<div class="obs-item"' + (i===item.o.length-1?' style="border-bottom:none"':'') + '><b>' + (i+1) + '.</b> ' + txt + '</div>';
+    });
+  } else if(esMesConDetalle(item.m)){
+    body += '<div class="obs-empty">Sin observaciones registradas para esta auditoría.</div>';
+  } else {
+    body += '<div class="obs-empty">Detalle no disponible antes de Junio 2026.</div>';
   }
-  if(typeof LZString !== 'undefined') render();
-  else window.addEventListener('load', render);
-  window.addEventListener('hashchange', render);
-})();
+  document.getElementById('modalBody').innerHTML = body;
+  document.getElementById('overlay').classList.add('show');
+}
+
+function cerrarDetalle(){
+  document.getElementById('overlay').classList.remove('show');
+}
+
+function render(){
+  try {
+    var hash = window.location.hash.substring(1);
+    if(!hash){ document.getElementById('app').innerHTML = '<div class="errbox">No se encontraron datos en el enlace.</div>'; return; }
+    var json = LZString.decompressFromEncodedURIComponent(hash);
+    if(!json){ document.getElementById('app').innerHTML = '<div class="errbox">No se pudo leer la información. El enlace puede estar incompleto.</div>'; return; }
+    var d = JSON.parse(json);
+    PERFIL_DATA = d;
+    var ini = (d.n||'').split(' ').filter(function(x){return x.length>0;}).slice(0,2).map(function(x){return x.charAt(0);}).join('').toUpperCase();
+
+    document.getElementById('app').innerHTML =
+      '<div class="card">' +
+      '<div class="hd"><div class="av">'+ini+'</div><div><div class="nm">'+(d.n||'')+'</div><div class="pu">'+(d.p||'')+'</div></div></div>' +
+      '<div class="bd">' +
+      '<div class="rw"><span class="kk">Correo</span><span class="vv">'+(d.c||'—')+'</span></div>' +
+      '<div class="rw"><span class="kk">Ingreso</span><span class="vv">'+fmtIngresoLargo(d.i)+'</span></div>' +
+      '<div class="rw"><span class="kk">Departamento</span><span class="vv">'+(d.d||'—')+'</span></div>' +
+      (d.fe ? '<a class="outlook-btn" onclick="descargarICS();return false;" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Agregar fecha de entrega a mi Outlook</a>' : '') +
+      '<div class="st">' +
+      '<div class="si active" id="si-todas" onclick="filtrar(\'todas\')"><div class="nn">'+(d.t||0)+'</div><div class="ll">TOTAL</div></div>' +
+      '<div class="si ap" id="si-aprob" onclick="filtrar(\'aprob\')"><div class="nn">'+(d.a||0)+'</div><div class="ll">APROBADAS</div></div>' +
+      '<div class="si re" id="si-reprob" onclick="filtrar(\'reprob\')"><div class="nn">'+(d.r||0)+'</div><div class="ll">REPROBADAS</div></div>' +
+      '</div></div>' +
+      '<div class="ti">HISTORIAL RECIENTE</div><div class="hl" id="histListInner"></div>' +
+      '</div>';
+    renderHistorial();
+  } catch(e) {
+    document.getElementById('app').innerHTML = '<div class="errbox">Error al mostrar el perfil: '+e.message+'</div>';
+  }
+}
+if(typeof LZString !== 'undefined') render();
+else window.addEventListener('load', render);
+window.addEventListener('hashchange', render);
 </script>
 </body>
 </html>
