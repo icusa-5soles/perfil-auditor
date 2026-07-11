@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perfil de Auditor - ICUSA</title>
+<script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
+body{background:#F1F5F9;color:#1B2A4A;min-height:100vh;padding:16px;}
+.wrap{max-width:420px;margin:0 auto;}
+.card{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.08);}
+.hd{background:linear-gradient(135deg,#1E3A8A,#1B2A4A);color:#fff;padding:22px 20px;display:flex;align-items:center;gap:14px;}
+.av{width:52px;height:52px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;flex-shrink:0;}
+.nm{font-size:16px;font-weight:800;line-height:1.2;}
+.pu{font-size:11px;color:#BFDBFE;margin-top:3px;text-transform:uppercase;letter-spacing:.03em;}
+.bd{padding:18px 20px;}
+.rw{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F1F5F9;font-size:12px;}
+.rw:last-child{border-bottom:none;}
+.kk{color:#64748B;font-weight:600;}
+.vv{color:#1B2A4A;font-weight:700;text-align:right;}
+.st{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;}
+.si{text-align:center;background:#F8FAFC;padding:12px 4px;border-radius:8px;}
+.si .nn{font-size:22px;font-weight:800;color:#1B2A4A;line-height:1;}
+.si .ll{font-size:8px;font-weight:700;color:#64748B;letter-spacing:.08em;margin-top:4px;}
+.si.ap{background:#F0FDF4;} .si.ap .nn{color:#166534;}
+.si.re{background:#FEF2F2;} .si.re .nn{color:#991B1B;}
+.ti{font-size:10px;font-weight:800;color:#1B2A4A;letter-spacing:.12em;padding:16px 20px 10px;background:#fff;border-top:1px solid #E2E8F0;}
+.hl{padding:0 20px 20px;background:#fff;}
+.hi{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#F8FAFC;border-radius:8px;margin-bottom:6px;font-size:11px;}
+.hi.ap{border-left:3px solid #22C55E;} .hi.re{border-left:3px solid #EF4444;}
+.hm{font-size:9px;color:#94A3B8;font-weight:700;letter-spacing:.05em;margin-bottom:2px;}
+.hs{font-size:11px;font-weight:700;color:#1B2A4A;}
+.hc{font-size:16px;font-weight:800;padding-left:10px;}
+.hc.ap{color:#166534;} .hc.re{color:#991B1B;}
+.errbox{padding:40px 20px;text-align:center;color:#991B1B;font-size:13px;}
+.foot{text-align:center;padding:16px 0 0;font-size:9px;color:#94A3B8;letter-spacing:.05em;}
+</style>
+</head>
+<body>
+<div class="wrap"><div id="app"><div class="errbox">Cargando perfil...</div></div><div class="foot">ICUSA · SGC · 5 SOLES</div></div>
+<script>
+(function(){
+  function render(){
+    try {
+      var hash = window.location.hash.substring(1);
+      if(!hash){ document.getElementById('app').innerHTML = '<div class="errbox">No se encontraron datos en el enlace.</div>'; return; }
+      var json = LZString.decompressFromEncodedURIComponent(hash);
+      if(!json){ document.getElementById('app').innerHTML = '<div class="errbox">No se pudo leer la información. El enlace puede estar incompleto.</div>'; return; }
+      var d = JSON.parse(json);
+      var meses = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+      var ini = (d.n||'').split(' ').filter(function(x){return x.length>0;}).slice(0,2).map(function(x){return x.charAt(0);}).join('').toUpperCase();
+      var hist = (d.h||[]).slice().sort(function(a,b){return b[0].localeCompare(a[0]);});
+      var histHtml = hist.map(function(a){
+        var mp = a[0].split('/');
+        var mn = (meses[parseInt(mp[0])]||'') + ' 20' + (mp[1]||'');
+        var ok = a[2] >= 90;
+        return '<div class="hi '+(ok?'ap':'re')+'"><div><div class="hm">'+mn+'</div><div class="hs">'+a[1]+'</div></div><div class="hc '+(ok?'ap':'re')+'">'+a[2]+'</div></div>';
+      }).join('');
+      document.getElementById('app').innerHTML =
+        '<div class="card">' +
+        '<div class="hd"><div class="av">'+ini+'</div><div><div class="nm">'+(d.n||'')+'</div><div class="pu">'+(d.p||'')+'</div></div></div>' +
+        '<div class="bd">' +
+        '<div class="rw"><span class="kk">Correo</span><span class="vv">'+(d.c||'—')+'</span></div>' +
+        '<div class="rw"><span class="kk">Ingreso</span><span class="vv">'+(d.i||'—')+'</span></div>' +
+        '<div class="rw"><span class="kk">Departamento</span><span class="vv">'+(d.d||'—')+'</span></div>' +
+        '<div class="st">' +
+        '<div class="si"><div class="nn">'+(d.t||0)+'</div><div class="ll">TOTAL</div></div>' +
+        '<div class="si ap"><div class="nn">'+(d.a||0)+'</div><div class="ll">APROBADAS</div></div>' +
+        '<div class="si re"><div class="nn">'+(d.r||0)+'</div><div class="ll">REPROBADAS</div></div>' +
+        '</div></div>' +
+        (hist.length ? '<div class="ti">HISTORIAL RECIENTE</div><div class="hl">'+histHtml+'</div>' : '') +
+        '</div>';
+    } catch(e) {
+      document.getElementById('app').innerHTML = '<div class="errbox">Error al mostrar el perfil: '+e.message+'</div>';
+    }
+  }
+  if(typeof LZString !== 'undefined') render();
+  else window.addEventListener('load', render);
+  window.addEventListener('hashchange', render);
+})();
+</script>
+</body>
+</html>
